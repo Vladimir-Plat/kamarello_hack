@@ -6,10 +6,11 @@ services:
     volumes:
       - ./backend/storage:/app/storage
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8765}
     ports:
       - "5174:80"
-    environment:
-      - VITE_API_URL=http://localhost:8765
     depends_on:
       - backend
