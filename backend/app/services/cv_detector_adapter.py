@@ -1,20 +1,11 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import Callable
 
 import pandas as pd
 
-from app.config import (
-    DETECTOR_CONF,
-    DETECTOR_DIR,
-    DETECTOR_ENABLED,
-    DETECTOR_FORCE_CPU,
-    DETECTOR_IOU,
-    DETECTOR_MODEL_PATH,
-    REPORT_DIR,
-)
+from app.config import DETECTOR_CONF, DETECTOR_ENABLED, DETECTOR_FORCE_CPU, DETECTOR_IOU, DETECTOR_MODEL_PATH, REPORT_DIR
 
 REQUIRED_COLUMNS = [
     'filename','product_name','price_default','price_card','price_discount','barcode','discount_amount','id_sku',
@@ -25,12 +16,7 @@ REQUIRED_COLUMNS = [
 
 
 def _load_processor_class():
-    src_dir = DETECTOR_DIR / 'src'
-    if not src_dir.exists():
-        raise RuntimeError(f'CV detector source directory not found: {src_dir}')
-    if str(src_dir) not in sys.path:
-        sys.path.insert(0, str(src_dir))
-    from detector import PriceTagProcessor  # type: ignore
+    from app.services.price_tag_detector_core import PriceTagProcessor
     return PriceTagProcessor
 
 

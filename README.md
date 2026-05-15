@@ -42,6 +42,10 @@ docker compose up --build
 
 Открыть: http://localhost:5174
 
+## Деплой
+
+Рекомендуемая схема для хакатона: backend на Railway, frontend на Vercel. Подробные настройки лежат в `DEPLOY.md`.
+
 ## Замена mock на реальную нейросеть
 
 Точка интеграции: `backend/app/services/mock_model.py`, функция `analyze_video(video_path, sample_dir, progress_callback)`.

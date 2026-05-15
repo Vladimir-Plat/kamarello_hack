@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -11,7 +10,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from app.config import UPLOAD_DIR, REPORT_DIR, SAMPLE_DATA_DIR
+from app.config import UPLOAD_DIR, REPORT_DIR, SAMPLE_DATA_DIR, MAX_UPLOAD_MB
 from app.schemas import JobCreateResponse, JobStatusResponse
 from app.services.mock_model import analyze_video
 
@@ -26,6 +25,7 @@ app.add_middleware(
 
 executor = ThreadPoolExecutor(max_workers=2)
 JOBS: Dict[str, Dict[str, Any]] = {}
+MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 
 
 def _set_progress(job_id: str, progress: int):
@@ -83,8 +83,17 @@ async def create_job(file: UploadFile = File(...)):
     job_id = str(uuid.uuid4())
     safe_name = Path(file.filename or f'video{suffix}').name
     upload_path = UPLOAD_DIR / f'{job_id}_{safe_name}'
+    written = 0
     with upload_path.open('wb') as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        while True:
+            chunk = file.file.read(1024 * 1024)
+            if not chunk:
+                break
+            written += len(chunk)
+            if written > MAX_UPLOAD_BYTES:
+                upload_path.unlink(missing_ok=True)
+                raise HTTPException(status_code=413, detail=f'Файл слишком большой. Лимит: {MAX_UPLOAD_MB} MB')
+            buffer.write(chunk)
     JOBS[job_id] = {
         'job_id': job_id,
         'status': 'queued',
