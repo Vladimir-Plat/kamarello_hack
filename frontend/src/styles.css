@@ -1,5 +1,12 @@
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   color: #172033;
   background: #f4f6f8;
 }
@@ -29,7 +36,7 @@ button {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: .45;
+  opacity: 0.45;
 }
 
 .app {
@@ -98,7 +105,7 @@ button:disabled {
   background: #fff;
   border: 1px solid #d8dee7;
   border-radius: 8px;
-  box-shadow: 0 12px 28px rgba(16, 24, 40, .06);
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.06);
 }
 
 .panel {
@@ -199,6 +206,143 @@ button:disabled {
   gap: 16px;
 }
 
+.historyPanel {
+  min-height: 210px;
+}
+
+.historyList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  max-height: 330px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.historyCard {
+  border: 1px solid #d8dee7;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.historyCard.selected {
+  border-color: #174ea6;
+  box-shadow: 0 0 0 3px rgba(23, 78, 166, 0.12);
+}
+
+.historyMain {
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  color: #172033;
+  border-radius: 0;
+  display: block;
+  text-align: left;
+  font-weight: 500;
+}
+
+.historyTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.historyTop b {
+  overflow-wrap: anywhere;
+}
+
+.historyMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.historyMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.historyProgress {
+  height: 8px;
+  margin-top: 12px;
+  background: #e4e7ec;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.historyProgress span {
+  display: block;
+  height: 100%;
+  background: #174ea6;
+  transition: width 0.25s ease;
+}
+
+.historyActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.historyActions button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.historyError {
+  margin: 10px 0 0;
+  color: #b42318;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.historyEmpty {
+  min-height: 130px;
+}
+
+.statusPill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.statusPill.done {
+  background: #dcfae6;
+  color: #067647;
+}
+
+.statusPill.failed {
+  background: #fee4e2;
+  color: #b42318;
+}
+
+.statusPill.processing {
+  background: #e0f2fe;
+  color: #026aa2;
+}
+
+.statusPill.queued {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.compactButton {
+  min-height: 36px;
+  padding: 8px 10px;
+}
+
 .steps {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -239,7 +383,7 @@ button:disabled {
   display: block;
   height: 100%;
   background: #1f9d55;
-  transition: width .25s ease;
+  transition: width 0.25s ease;
 }
 
 .summaryGrid {
@@ -340,5 +484,10 @@ td {
   .topbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .historyList {
+    grid-template-columns: 1fr;
+    max-height: none;
   }
 }
