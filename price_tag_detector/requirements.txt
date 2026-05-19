@@ -1,8 +1,13 @@
-# Price Tag Detector - Python dependencies
-# PyTorch is installed separately via install.bat (CUDA build)
-# These are installed after PyTorch
-
-ultralytics==8.2.18
-opencv-python==4.9.0.80
-numpy==1.26.4
+# PyTorch устанавливается через setup.bat (CUDA 12.1)
+# Остальное:
+ultralytics>=8.3.0
+opencv-python>=4.9.0
+numpy>=1.26.0
+Pillow>=10.0.0
+albumentations>=1.4.0
+transformers>=4.40.0
+timm>=0.9.16
+scipy>=1.12.0
 lapx>=0.5.2
+tqdm>=4.66.0
+PyYAML>=6.0
