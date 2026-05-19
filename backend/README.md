@@ -1,34 +1,43 @@
-# Lenta ShelfVision API
+# Kamarello Backend
 
-FastAPI backend для хакатона Lenta Tech: прием видео робота, запуск анализа, выдача CSV/XLSX отчета.
+FastAPI backend for video upload, YOLOv8 price-tag detection, optional PaddleOCR, rule-based parsing, and CSV/XLSX export.
 
-## Запуск
+## Run
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate # Windows: .venv\\Scripts\\activate
+source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8765
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-API: http://localhost:8765/docs
+API docs: http://localhost:8000/docs
 
-## Контракт
+Optional OCR:
 
-- `POST /api/jobs` — multipart upload `file`, возвращает `job_id`.
-- `GET /api/jobs/{job_id}` — статус, прогресс, метрики, ссылки на отчеты.
-- `GET /api/jobs/{job_id}/download.csv` — CSV.
-- `GET /api/jobs/{job_id}/download.xlsx` — Excel.
+```bash
+pip install -r requirements-ocr.txt
+```
 
-## Где подключать нейросеть
+## Endpoints
 
-Файл `app/services/mock_model.py`, функция `analyze_video(...)`.
+- `GET /`
+- `GET /api/health`
+- `POST /api/jobs`
+- `GET /api/jobs/{job_id}`
+- `GET /api/jobs/{job_id}/download.csv`
+- `GET /api/jobs/{job_id}/download.xlsx`
 
-Сейчас порядок такой:
+## Render Env
 
-1. Backend пробует запустить `price_tag_detector` через `app/services/cv_detector_adapter.py`.
-2. Если YOLO/Ultralytics доступны, детектор возвращает реальные bbox ценников/кандидатов, timestamp и координаты. Эти поля приводятся к 29-колоночному CSV-контракту задачи.
-3. Если CV-детектор недоступен или ничего не нашел, используется CSV из `sample_data`, если имя видео совпадает.
-4. Если sample не найден, генерируется демо-результат.
+```text
+LENTA_USE_CV_DETECTOR=1
+LENTA_DETECTOR_CPU=1
+LENTA_USE_OCR=1
+LENTA_USE_LLM_REFINER=0
+LENTA_LLM_MODEL_PATH=
+LENTA_OCR_LANG=ru
+LENTA_MAX_CROPS_PER_VIDEO=300
+```
 
-OCR текста и QR пока не подключены, поэтому для строк, полученных из CV-детектора, текстовые и ценовые поля остаются пустыми.
+Set `LENTA_USE_OCR=0` if PaddleOCR is too heavy for the instance.

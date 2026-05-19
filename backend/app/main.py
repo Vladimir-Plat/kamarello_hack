@@ -20,7 +20,12 @@ app = FastAPI(title="Lenta ShelfVision API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://kamarello-hack.vercel.app",
+        "https://kamarello-hack-git-main-olegs-projects-4acc0c1b.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -121,9 +126,19 @@ def _run_analysis(job_id: str):
         _persist()
 
 
+@app.get("/")
+def root():
+    return {"status": "ok", "docs": "/docs", "health": "/api/health"}
+
+
+@app.get("/api/health")
+def api_health():
+    return {"status": "ok", "service": "kamarello-backend"}
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "kamarello-backend"}
 
 
 @app.post("/api/jobs", response_model=JobCreateResponse)

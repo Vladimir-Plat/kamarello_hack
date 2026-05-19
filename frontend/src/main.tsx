@@ -52,15 +52,19 @@ type HistoryItem = {
   updated_at?: string | null;
 };
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8765";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const RESULT_COLUMNS = [
   "product_name",
   "price_default",
   "price_card",
+  "price_discount",
   "barcode",
   "discount_amount",
+  "id_sku",
+  "additional_info",
   "color",
+  "special_symbols",
   "frame_timestamp",
 ];
 
@@ -87,7 +91,7 @@ function App() {
 
   const loadHistory = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/history`);
+      const res = await fetch(`${API_BASE_URL}/api/history`);
 
       if (!res.ok) {
         throw new Error(await res.text());
@@ -100,7 +104,7 @@ function App() {
   }, []);
 
   const refreshJob = useCallback(async (jobId: string) => {
-    const res = await fetch(`${API_URL}/api/jobs/${jobId}`);
+    const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`);
 
     if (!res.ok) {
       throw new Error(await res.text());
@@ -183,7 +187,7 @@ function App() {
     form.append("file", file);
 
     try {
-      const res = await fetch(`${API_URL}/api/jobs`, {
+      const res = await fetch(`${API_BASE_URL}/api/jobs`, {
         method: "POST",
         body: form,
       });
@@ -223,7 +227,7 @@ function App() {
 
   const download = (url?: string | null) => {
     if (url) {
-      window.location.href = `${API_URL}${url}`;
+      window.location.href = `${API_BASE_URL}${url}`;
     }
   };
 
