@@ -13,6 +13,11 @@ DETECTOR_ENABLED = os.getenv('LENTA_USE_CV_DETECTOR', '1').lower() not in {'0', 
 DETECTOR_FORCE_CPU = os.getenv('LENTA_DETECTOR_CPU', '1').lower() not in {'0', 'false', 'no'}
 DETECTOR_CONF = float(os.getenv('LENTA_DETECTOR_CONF', '0.35'))
 DETECTOR_IOU = float(os.getenv('LENTA_DETECTOR_IOU', '0.45'))
+OCR_ENABLED = os.getenv('LENTA_USE_OCR', '1').lower() not in {'0', 'false', 'no'}
+OCR_LANG = os.getenv('LENTA_OCR_LANG', 'ru')
+LLM_REFINER_ENABLED = os.getenv('LENTA_USE_LLM_REFINER', '0').lower() not in {'0', 'false', 'no'}
+LLM_MODEL_PATH = os.getenv('LENTA_LLM_MODEL_PATH', '')
+MAX_CROPS_PER_VIDEO = int(os.getenv('LENTA_MAX_CROPS_PER_VIDEO', '300'))
 MAX_UPLOAD_MB = int(os.getenv('MAX_UPLOAD_MB', '250'))
 for p in (UPLOAD_DIR, REPORT_DIR, SAMPLE_DATA_DIR):
     p.mkdir(parents=True, exist_ok=True)

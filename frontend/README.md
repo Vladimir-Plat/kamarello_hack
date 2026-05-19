@@ -1,16 +1,18 @@
-# Lenta ShelfVision Frontend
+# Kamarello Frontend
 
-React + Vite интерфейс для загрузки видео, просмотра прогресса обработки и скачивания CSV/XLSX отчета.
+React + Vite interface for uploading shelf videos, tracking job progress, previewing extracted price-tag rows, and downloading CSV/XLSX reports.
 
-## Запуск
+## Run
 
 ```bash
 npm install
-npm run dev
+VITE_API_URL=http://localhost:8000 npm run dev
 ```
 
-По умолчанию фронт ходит на `http://localhost:8765`. Можно переопределить:
+Production Vercel env:
 
-```bash
-VITE_API_URL=http://localhost:8765 npm run dev
+```text
+VITE_API_URL=https://kamarello-backend.onrender.com
 ```
+
+The app uses `import.meta.env.VITE_API_URL` for every backend request.

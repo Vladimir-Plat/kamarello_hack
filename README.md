@@ -1,78 +1,140 @@
-# Lenta ShelfVision
+# Kamarello Hack
 
-Полный прототип под кейс Lenta Tech Life Hack: React frontend + FastAPI backend.
+Prototype for Lenta Tech Life Hack: Vercel React frontend uploads shelf videos, Render FastAPI backend detects price tags with YOLOv8, runs OCR/parsing on the best crops, and exports CSV/XLSX.
 
-## Что реализовано
+## Architecture
 
-- Загрузка видео с робота через красивый web-интерфейс.
-- Асинхронная задача анализа с прогрессом.
-- Backend-контракт под будущую CV/OCR нейросеть.
-- Генерация отчета в CSV и XLSX.
-- Полный набор колонок из задания.
-- Mock/sample adapter: если имя видео совпадает с CSV организаторов, backend вернет соответствующие данные; иначе создаст демо-результат.
-- Dockerfile для фронта и бэка, docker-compose для локального запуска.
+Current deployed scheme:
 
-## Быстрый запуск без Docker
+`Vercel frontend -> Render backend -> YOLO/OCR processing -> CSV/XLSX download`
 
-### Backend
+Frontend: https://kamarello-hack.vercel.app
+
+Backend: https://kamarello-backend.onrender.com
+
+Vercel only serves the React app. It does not run YOLO, OCR, or LLM code. All heavy video processing runs on the Render backend, and the frontend talks to it through HTTPS API calls.
+
+## API
+
+- `GET /` returns backend status and links.
+- `GET /api/health` returns `{"status":"ok","service":"kamarello-backend"}`.
+- `POST /api/jobs` accepts multipart video upload as `file`.
+- `GET /api/jobs/{job_id}` returns status, progress, metrics, preview rows, and report URLs.
+- `GET /api/jobs/{job_id}/download.csv` downloads CSV.
+- `GET /api/jobs/{job_id}/download.xlsx` downloads XLSX.
+
+## Processing Pipeline
+
+The primary path is computer vision plus OCR, not VLM:
+
+1. YOLOv8 detects price tags in video frames.
+2. Tracking keeps the sharpest crop for each detected tag.
+3. PaddleOCR reads text from crop variants.
+4. Rule-based parser extracts product, prices, discounts, barcode, SKU, color, and promo symbols.
+5. Optional LLM refiner can improve fields using OCR text only, never images.
+
+If OCR is disabled or unavailable, the backend does not crash. It still returns bbox/crop metadata and falls back to sample/mock output when needed.
+
+## Local Run
+
+Backend:
 
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8765
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Frontend
+Optional OCR dependencies:
+
+```bash
+cd backend
+pip install -r requirements-ocr.txt
+```
+
+Frontend:
 
 ```bash
 cd frontend
 npm install
-npm run dev
+VITE_API_URL=http://localhost:8000 npm run dev
 ```
 
-Открыть: http://localhost:5174
+## Deployment
 
-## Запуск через Docker
+### Frontend: Vercel
 
-```bash
-docker compose up --build
+Project URL: https://kamarello-hack.vercel.app
+
+Set this environment variable in Vercel:
+
+```text
+VITE_API_URL=https://kamarello-backend.onrender.com
 ```
 
-Открыть: http://localhost:5174
+Vercel path:
 
-## Деплой
+`Project Settings -> Environment Variables -> add VITE_API_URL -> Redeploy`
 
-Рекомендуемая схема для хакатона: backend на Railway, frontend на Vercel. Подробные настройки лежат в `DEPLOY.md`.
+Vite embeds `VITE_API_URL` during build, so redeploy is required after changing it.
 
-## Замена mock на реальную нейросеть
+### Backend: Render
 
-Точка интеграции: `backend/app/services/mock_model.py`, функция `analyze_video(video_path, sample_dir, progress_callback)`.
+Backend public URL: https://kamarello-backend.onrender.com
 
-Она должна вернуть `pandas.DataFrame` с колонками:
+Use the backend Docker service. Recommended Render environment:
 
-`filename, product_name, price_default, price_card, price_discount, barcode, discount_amount, id_sku, print_datetime, code, additional_info, color, special_symbols, frame_timestamp, x_min, y_min, x_max, y_max, qr_code_barcode, price1_qr, price2_qr, price3_qr, price4_qr, wholesale_level_1_count, wholesale_level_1_price, wholesale_level_2_count, wholesale_level_2_price, action_price_qr, action_code_qr`.
+```text
+LENTA_USE_CV_DETECTOR=1
+LENTA_DETECTOR_CPU=1
+LENTA_USE_OCR=1
+LENTA_USE_LLM_REFINER=0
+LENTA_LLM_MODEL_PATH=
+LENTA_OCR_LANG=ru
+LENTA_MAX_CROPS_PER_VIDEO=300
+```
 
-## Фактическая архитектура фронта и бэка
+If PaddleOCR does not fit into the free Render instance or crashes because of memory, set:
 
-### Frontend
+```text
+LENTA_USE_OCR=0
+```
 
-- React + Vite SPA в `frontend/src/main.tsx`.
-- Первый экран сразу является рабочим инструментом: загрузка видео, локальное video-preview, запуск анализа, прогресс пайплайна, метрики, превью первых строк результата и скачивание CSV/XLSX.
-- API-адрес задается через `VITE_API_URL`, по умолчанию используется `http://localhost:8765`.
+The backend will keep running and will return detector metadata plus fallback fields.
 
-### Backend
+Optional LLM mode:
 
-- FastAPI-приложение в `backend/app/main.py`.
-- `POST /api/jobs` принимает видео, сохраняет его в `backend/storage/uploads` и запускает обработку в `ThreadPoolExecutor`.
-- `GET /api/jobs/{job_id}` возвращает статус, прогресс, метрики, ссылки на отчеты и `preview_rows` для табличного просмотра на фронте.
-- `GET /api/jobs/{job_id}/download.csv` и `/download.xlsx` отдают готовые файлы из `backend/storage/reports`.
-- Путь к sample-данным можно переопределить переменной окружения `LENTA_SAMPLE_DATA_DIR`; если она не задана, используется `backend/sample_data`.
-- Перед sample/mock backend пробует запустить CV-детектор из `price_tag_detector`: YOLOv8n + tracking + выбор самого резкого crop. Настройки: `LENTA_USE_CV_DETECTOR`, `LENTA_DETECTOR_CPU`, `LENTA_DETECTOR_CONF`, `LENTA_DETECTOR_IOU`, `LENTA_DETECTOR_MODEL_PATH`.
+```text
+LENTA_USE_LLM_REFINER=1
+LENTA_LLM_MODEL_PATH=/path/to/qwen2.5-3b-instruct-q4_k_m.gguf
+```
 
-### Что пока не является боевой CV/OCR-частью
+Use a small quantized text model such as Qwen2.5-3B-Instruct Q4_K_M. Do not use 7B on free Render.
 
-- Детекция bbox уже подключена через `price_tag_detector`, если установлены зависимости и доступны веса YOLO.
-- OCR текста и разбор QR пока не реализованы: для строк от CV-детектора заполняются `filename`, `frame_timestamp`, `x_min`, `y_min`, `x_max`, `y_max`, а текстовые/ценовые поля остаются пустыми.
-- Если CV-детектор недоступен или не нашел объектов, backend использует sample CSV по имени видео; если совпадения по имени нет, генерируется демонстрационный результат с тем же выходным контрактом.
+## Frontend API URL
+
+Frontend uses one API helper:
+
+```ts
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+```
+
+All requests go through it:
+
+- `POST ${API_BASE_URL}/api/jobs`
+- `GET ${API_BASE_URL}/api/jobs/${jobId}`
+- `GET ${API_BASE_URL}/api/jobs/${jobId}/download.csv`
+- `GET ${API_BASE_URL}/api/jobs/${jobId}/download.xlsx`
+
+## Verification
+
+After deployment check:
+
+1. https://kamarello-backend.onrender.com/api/health opens.
+2. https://kamarello-backend.onrender.com/docs opens.
+3. Frontend posts videos to `https://kamarello-backend.onrender.com/api/jobs`, not localhost.
+4. Browser console has no CORS errors.
+5. CSV/XLSX downloads from the Render backend.
+6. A sleeping free Render instance may need 50+ seconds for the first request.
